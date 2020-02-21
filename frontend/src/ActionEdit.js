@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import Select from 'react-select';
 
 
-let getSafeText = (el) => {
+export let getSafeText = (el) => {
     if(!el.childNodes || !el.childNodes.length) return;
     let elText = '';
     el.childNodes.forEach((child) => {

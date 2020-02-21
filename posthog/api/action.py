@@ -2,7 +2,6 @@ from posthog.models import Event, Team, Action, ActionStep, Element, User
 from rest_framework import request, serializers, viewsets, authentication # type: ignore
 from rest_framework.response import Response
 from rest_framework.decorators import action # type: ignore
-from rest_framework.exceptions import AuthenticationFailed
 from django.db.models import Q, F, Count, Prefetch
 from django.forms.models import model_to_dict
 from typing import Any, List, Dict
@@ -10,7 +9,7 @@ import pandas as pd # type: ignore
 import numpy as np # type: ignore
 import datetime
 from dateutil.relativedelta import relativedelta
-
+from .base import TemporaryTokenAuthentication
 
 class ActionStepSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -28,19 +27,6 @@ class ActionSerializer(serializers.HyperlinkedModelSerializer):
         steps = action.steps.all().order_by('id')
         return ActionStepSerializer(steps, many=True).data
 
-class TemporaryTokenAuthentication(authentication.BaseAuthentication):
-    def authenticate(self, request: request.Request):
-        # if the Origin is different, the only authentication method should be temporary_token
-        # This happens when someone is trying to create actions from the editor on their own website
-        if request.headers.get('Origin') and request.headers['Origin'] not in request.build_absolute_uri('/'):
-            if not request.GET.get('temporary_token'):
-                raise AuthenticationFailed(detail='No token')
-        if request.GET.get('temporary_token'):
-            user = User.objects.filter(temporary_token=request.GET.get('temporary_token'))
-            if not user.exists():
-                raise AuthenticationFailed(detail='User doesnt exist')
-            return (user.first(), None)
-        return None
 
 class ActionViewSet(viewsets.ModelViewSet):
     queryset = Action.objects.all()

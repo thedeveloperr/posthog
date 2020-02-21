@@ -4,6 +4,9 @@ import Simmer from 'simmerjs';
 import root from 'react-shadow';
 import { ActionEdit } from "../ActionEdit";
 import Draggable from 'react-draggable';
+import { _getPropertiesFromElement } from "./capture_events";
+import api from "../Api";
+import { uuid } from "../utils";
 
 window.simmer = new Simmer(window, {depth: 8});
 
@@ -51,6 +54,37 @@ let styles = `
         background-attachment: local, local, scroll, scroll;
     }
 `;
+
+class Heatmap extends Component {
+    constructor(props) {
+        super(props)
+    
+        this.state = {
+        }
+        this.fetchVolumes = this.fetchVolumes.bind(this);
+        this.fetchVolumes();
+    }
+    getAllElements() {
+        let usefulElements = ['a', 'button', 'form', 'input', 'select', 'textarea', 'label'];
+        let elements = document.querySelectorAll(usefulElements.join(', '))
+        let return_elements = {};
+        elements.forEach((element) => return_elements[uuid()] = _getPropertiesFromElement(element))
+        return return_elements;
+    }
+    fetchVolumes() {
+        let elements = this.getAllElements();
+
+        api.create('api/element/volume/', elements).then((elements) => this.setState({elements}))
+    }
+    render() {
+        return <div>
+            {JSON.stringify(this.state.elements)}
+            tudu
+        </div>
+    }
+    
+}
+
 class App extends Component {
     constructor(props) {
         super(props)
@@ -66,6 +100,7 @@ class App extends Component {
                             <img className="logo" src="https://posthog.com/wp-content/uploads/elementor/thumbs/Instagram-Post-1hedgehog-off-black-ok61e8eds76dma39iqao8cwbeihgdc2a9grtrwy6p4.png" />
                             <h3>PostHog</h3><br />
                         </div>
+                        <Heatmap />
                         <ActionEdit
                             apiURL={this.props.apiURL}
                             temporaryToken={this.props.temporaryToken}
